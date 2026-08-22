@@ -117,33 +117,20 @@ function renderPreview(pool,jobs,sum){let t=`📊 NF3 Production Summary Report
 ${i+1}) ${b.batchNo||"-"} → Tank ${b.mixTank||"-"} | Input ${fmt(b.bulkInput)} kg | Used ${fmt(b.bulkUsed)} kg
 `});jobs.forEach((j,i)=>{t+=`
 ━━ Job ${i+1} ━━
-
 ⚙️ Line: ${j.line||"-"}
-
 📏 Size: ${j.size||"-"} ml
-
 🏷 Product: ${j.product||"-"}
-
 ✅ Output: ${fmt(j.output,0)}
-
 ⚖️ Avg ${j.weightType}: ${fmt(j.avgWeight,3)} g
-
 💧 น้ำยาที่คิดได้: ${fmt(j.liquid)} kg
-
 🧴 Pouch Scrap: ${fmt(j.pouchScrap,0)} (${pct(j.pouchLoss)})
 `});t+=`
 ━━ Summary ━━
-
 ✅ Output รวม: ${fmt(sum.output,0)}
-
 💧 Bulk ที่ได้จากผสม: ${fmt(pool.used)} kg
-
 🧴 Bulk ที่คิดได้จากงานรวม: ${fmt(sum.liquid)} kg
-
 📉 Yield loss : ${signed(sum.loss)} kg (${signedPct(sum.lossPct)})
-
 🎯 Yield: ${pct(sum.yieldPct)}
-
 👤 ผู้รายงาน: ${$("reporter").value.trim()||"-"}`;$("preview").textContent=t}
 function validate(){if(!$("reporter").value.trim()){showError("กรุณากรอกผู้รายงาน");return false}const brows=[...document.querySelectorAll("#batchRows .batchRow")];if(!brows.length){showError("ต้องมีอย่างน้อย 1 Batch");return false}for(let i=0;i<brows.length;i++){if(!brows[i].querySelector('[data-b="batchNo"]').value.trim()){showError(`Batch ${i+1}: กรุณากรอก Batch No.`);return false}if(!brows[i].querySelector('[data-b="mixTank"]').value.trim()){showError(`Batch ${i+1}: กรุณากรอก Mix Tank No.`);return false}if(numEl(brows[i].querySelector('[data-b="bulkInput"]'))<=0){showError(`Batch ${i+1}: Bulk Input ต้องมากกว่า 0`);return false}}const jobs=jobCards();if(!jobs.length){showError("ต้องมีอย่างน้อย 1 Job");return false}for(let i=0;i<jobs.length;i++){const c=jobs[i],n=i+1,p=productCfg(c);if(!c.querySelector('[data-f="line"]').value){showError(`Job ${n}: กรุณาเลือก Line`);return false}if(!c.querySelector('[data-f="size"]').value){showError(`Job ${n}: กรุณาเลือก Size`);return false}if(!p){showError(`Job ${n}: กรุณาเลือก Product หรือเพิ่มใน ProductMaster`);return false}if(numEl(c.querySelector('[data-f="output"]'))<=0){showError(`Job ${n}: กรุณากรอก Output`);return false}if(numEl(c.querySelector('[data-f="avgWeight"]'))<=0){showError(`Job ${n}: กรุณากรอก Avg Weight`);return false}}return true}
 function reportId(){return "NF3-"+new Date().toISOString().replace(/\D/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,6).toUpperCase()}
