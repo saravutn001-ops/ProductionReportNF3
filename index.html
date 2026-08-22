@@ -98,7 +98,6 @@ async function loadMaster(){
 
 function lines(){return [...new Set(master.lineSizes.map(x=>x.line))]}
 function sizesFor(line){return master.lineSizes.filter(x=>x.line===line).map(x=>x.size).sort((a,b)=>a-b)}
-function machinesFor(line){return master.machines.filter(x=>x.line===line)}
 function productsFor(size){return master.products.filter(x=>Number(x.size)===Number(size))}
 function lineCfg(line,size){return master.lineSizes.find(x=>x.line===line&&Number(x.size)===Number(size))||null}
 function productCfg(card){return master.products.find(x=>x.productId===card.querySelector('[data-f="product"]').value)||null}
@@ -108,8 +107,6 @@ function jobTemplate(id){
  return `<div class="jobHead"><div class="jobTitle">Job <span class="jobNo"></span></div><button type="button" class="removeJob">ลบ Job</button></div>
  <div class="jobBody"><div class="grid">
    <div><label>Line</label><select data-f="line"><option value="">เลือก Line</option>${lines().map(x=>`<option>${x}</option>`).join("")}</select></div>
-   <div><label>Machine</label><select data-f="machine"><option value="">เลือก Machine</option></select></div>
-   <div class="laneWrap hidden"><label>Lane</label><select data-f="lane"><option value="">รวม / ไม่ระบุ</option></select></div>
    <div><label>Size</label><select data-f="size"><option value="">เลือก Size</option></select></div>
    <div class="full"><label>Product</label><select data-f="product"><option value="">เลือก Product</option></select></div>
    <div class="full masterInfo">เลือก Line → Size → Product</div>
@@ -164,18 +161,10 @@ function renumberBatches(card){const rows=[...card.querySelectorAll(".batchRow")
 
 function refreshLine(card){
  const line=card.querySelector('[data-f="line"]').value;
- const m=card.querySelector('[data-f="machine"]'),sz=card.querySelector('[data-f="size"]');
- m.innerHTML='<option value="">เลือก Machine</option>'+machinesFor(line).map(x=>`<option>${x.machine}</option>`).join("");
+ const sz=card.querySelector('[data-f="size"]');
  sz.innerHTML='<option value="">เลือก Size</option>'+sizesFor(line).map(x=>`<option value="${x}">${x} ml</option>`).join("");
  card.querySelector('[data-f="product"]').innerHTML='<option value="">เลือก Product</option>';
- refreshMachine(card);refreshProduct(card)
-}
-function refreshMachine(card){
- const line=card.querySelector('[data-f="line"]').value,machine=card.querySelector('[data-f="machine"]').value;
- const cfgm=master.machines.find(x=>x.line===line&&x.machine===machine),wrap=card.querySelector(".laneWrap"),lane=card.querySelector('[data-f="lane"]');
- const count=cfgm?Number(cfgm.laneCount||0):0;
- if(count>0){wrap.classList.remove("hidden");lane.innerHTML='<option value="">รวม / ไม่ระบุ</option>'+Array.from({length:count},(_,i)=>`<option value="${i+1}">Lane ${i+1}</option>`).join("")}
- else{wrap.classList.add("hidden");lane.innerHTML='<option value="">รวม / ไม่ระบุ</option>'}
+ refreshProduct(card)
 }
 function refreshSize(card){
  const size=Number(card.querySelector('[data-f="size"]').value||0),sel=card.querySelector('[data-f="product"]'),ps=productsFor(size);
@@ -212,7 +201,7 @@ function calcJob(card){
  card.querySelector('[data-v="yield"]').textContent=bulkUsed?pct(yieldPct):"-";card.querySelector('[data-v="fillDelta"]').textContent=target?(fillDeltaKg>=0?"+":"")+fmt(fillDeltaKg)+" kg":"-";
  card.querySelector('[data-v="pouchLoss"]').textContent=output?pct(pouchLoss):"-";card.querySelector('[data-v="filmLoss"]').textContent=filmIssued?pct(filmLoss):"-";card.querySelector('[data-v="boxLoss"]').textContent=output&&pack?pct(boxLoss):"-";
  const st=card.querySelector('[data-v="status"]');st.className="status "+(!p||!output||!bulkUsed?"wait":std<=0?"warn":result==="ผ่าน"?"pass":"fail");st.textContent=!p||!output||!bulkUsed?"รอข้อมูล":std<=0?"⚠️ ยังไม่ตั้ง Standard":result==="ผ่าน"?"✅ ผ่านมาตรฐาน":"🔴 เกินมาตรฐาน";
- return {line,machine:card.querySelector('[data-f="machine"]').value,lane:card.querySelector('[data-f="lane"]').value,size,product:p?p.product:"",productId:p?p.productId:"",packagingType:lc?lc.packagingType:"",
+ return {line,machine:"",lane:"",size,product:p?p.product:"",productId:p?p.productId:"",packagingType:lc?lc.packagingType:"",
    batches,output,weightType,avgWeight:raw,avgNet,bulkUsed,good,loss,lossPct,yieldPct,fillDeltaKg,std,result,pouchScrap,pouchLoss,filmIssued,filmScrap,filmLoss,boxScrap,boxLoss,remark:card.querySelector('[data-f="remark"]').value.trim()}
 }
 function calcAll(){
@@ -247,7 +236,6 @@ function validate(){
  for(let i=0;i<jobs.length;i++){
    const c=jobs[i],n=i+1,p=productCfg(c);
    if(!c.querySelector('[data-f="line"]').value){showError(`Job ${n}: กรุณาเลือก Line`);return false}
-   if(!c.querySelector('[data-f="machine"]').value){showError(`Job ${n}: กรุณาเลือก Machine`);return false}
    if(!c.querySelector('[data-f="size"]').value){showError(`Job ${n}: กรุณาเลือก Size`);return false}
    if(!p){showError(`Job ${n}: กรุณาเลือก Product หรือเพิ่ม Product ใน ProductMaster`);return false}
    if(numEl(c.querySelector('[data-f="output"]'))<=0){showError(`Job ${n}: กรุณากรอก Output`);return false}
@@ -282,7 +270,6 @@ function resetReport(){
 $("jobs").addEventListener("change",e=>{
  const card=e.target.closest(".job");if(!card)return;
  if(e.target.matches('[data-f="line"]'))refreshLine(card);
- if(e.target.matches('[data-f="machine"]'))refreshMachine(card);
  if(e.target.matches('[data-f="size"]'))refreshSize(card);
  if(e.target.matches('[data-f="product"]'))refreshProduct(card);
  calcAll()
