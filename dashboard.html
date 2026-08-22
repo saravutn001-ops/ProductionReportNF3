@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f4c81">
+<title>NF3 Production Dashboard</title>
+<script src="config.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef4f8;color:#17212b;font-family:"Sukhumvit Set","Leelawadee UI","Noto Sans Thai",Arial,sans-serif}.wrap{max-width:1240px;margin:auto;padding:14px 14px 50px}
+header{background:linear-gradient(135deg,#0f4c81,#1d6fa5);color:#fff;border-radius:18px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{margin:0;font-size:24px}header p{margin:5px 0 0;opacity:.86}.back{color:#fff;text-decoration:none;font-weight:800;border:1px solid #ffffff80;border-radius:10px;padding:9px 12px}
+.card{background:#fff;border:1px solid #dbe5ec;border-radius:15px;padding:15px;margin-top:14px;box-shadow:0 4px 14px #1e3a5f10}.filters{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}label{display:block;font-size:13px;font-weight:800;color:#64748b;margin-bottom:5px}input,select,button{width:100%;padding:10px 11px;border:1px solid #cfdbe4;border-radius:10px;font:inherit}button{background:#0f4c81;color:#fff;font-weight:900;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.kpi{background:#fff;border:1px solid #dbe5ec;border-radius:14px;padding:13px}.l{font-size:12px;color:#64748b}.n{font-size:21px;font-weight:900;margin-top:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}h2{font-size:17px;color:#0f4c81;margin:0 0 12px}.bars{display:grid;gap:8px}.barrow{display:grid;grid-template-columns:150px 1fr 82px;gap:8px;align-items:center;font-size:13px}.track{height:15px;background:#edf2f6;border-radius:99px;overflow:hidden}.fill{height:100%;background:#1d6fa5;border-radius:99px}.tank .fill{background:#7c3aed}.prod .fill{background:#0f766e}
+.svgbox{width:100%;height:270px;border:1px solid #e2e8f0;border-radius:12px;background:#fbfdff}.note{font-size:11px;color:#64748b;margin-top:8px}.msg{display:none;margin-top:14px;padding:12px;border-radius:10px;background:#fff7d6;color:#7c5a00}
+.tablewrap{overflow:auto;max-height:440px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left;white-space:nowrap}th{background:#eaf2f8;color:#0f4c81;position:sticky;top:0}.pill{display:inline-block;padding:3px 8px;border-radius:99px;font-weight:800}.pass{background:#dcfce7;color:#166534}.fail{background:#fee2e2;color:#b91c1c}.wait{background:#fef3c7;color:#92400e}
+@media(max-width:900px){.filters{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.barrow{grid-template-columns:110px 1fr 72px}}@media(max-width:520px){.filters{grid-template-columns:1fr}}
+</style></head>
+<body><div class="wrap">
+<header><div><h1>NF3 Production Dashboard</h1><p>Multi-Line • Multi-Size • Mix Tank Traceability</p></div><a class="back" href="index.html">หน้ากรอก</a></header>
+<div id="msg" class="msg"></div>
+
+<div class="card filters">
+ <div><label>เดือน</label><input id="month" type="month"></div>
+ <div><label>Line</label><select id="line"><option>ทั้งหมด</option></select></div>
+ <div><label>Size</label><select id="size"><option>ทั้งหมด</option></select></div>
+ <div><label>Product</label><select id="product"><option>ทั้งหมด</option></select></div>
+ <button id="load">โหลดข้อมูล</button>
+</div>
+
+<div class="kpis">
+ <div class="kpi"><div class="l">Reports / Jobs</div><div class="n" id="jobs">0 / 0</div></div>
+ <div class="kpi"><div class="l">Output รวม</div><div class="n" id="output">0</div></div>
+ <div class="kpi"><div class="l">Bulk Used</div><div class="n" id="bulk">0 kg</div></div>
+ <div class="kpi"><div class="l">Process Loss</div><div class="n" id="lossKg">0 kg</div></div>
+ <div class="kpi"><div class="l">Process Loss %</div><div class="n" id="lossPct">0%</div></div>
+ <div class="kpi"><div class="l">Yield</div><div class="n" id="yield">0%</div></div>
+ <div class="kpi"><div class="l">Pass Rate</div><div class="n" id="passRate">0%</div></div>
+ <div class="kpi"><div class="l">Fill Delta รวม</div><div class="n" id="fillDelta">0 kg</div></div>
+ <div class="kpi"><div class="l">% Pouch Loss</div><div class="n" id="pouchLoss">0%</div></div>
+ <div class="kpi"><div class="l">% Film Loss</div><div class="n" id="filmLoss">0%</div></div>
+ <div class="kpi"><div class="l">% Box Loss</div><div class="n" id="boxLoss">0%</div></div>
+ <div class="kpi"><div class="l">Pass / Fail Jobs</div><div class="n" id="pf">0 / 0</div></div>
+</div>
+
+<div class="grid2">
+ <div class="card"><h2>Process Loss แยก Line</h2><div id="byLine" class="bars"></div></div>
+ <div class="card"><h2>Process Loss แยก Size</h2><div id="bySize" class="bars"></div></div>
+</div>
+<div class="grid2">
+ <div class="card prod"><h2>Process Loss แยก Product</h2><div id="byProduct" class="bars"></div></div>
+ <div class="card tank"><h2>Process Loss แยก Mix Tank</h2><div id="byTank" class="bars"></div><div class="note">Loss by Mix Tank เป็นการกระจาย Process Loss ของ Job ตามสัดส่วน Bulk Used ของแต่ละ Batch/Tank</div></div>
+</div>
+<div class="card"><h2>แนวโน้ม Process Loss % รายวัน</h2><svg id="trend" class="svgbox" viewBox="0 0 1000 270" preserveAspectRatio="none"></svg></div>
+<div class="card"><h2>รายการ Job ล่าสุด</h2><div class="tablewrap"><table><thead><tr><th>เวลา</th><th>Report</th><th>Line</th><th>Machine</th><th>Size</th><th>Product</th><th>Output</th><th>Loss %</th><th>Fill Δ kg</th><th>Result</th></tr></thead><tbody id="recent"></tbody></table></div></div>
+</div>
+<script>
+const cfg=window.NF3_REPORT_CONFIG||{},$=id=>document.getElementById(id);
+const now=new Date();$("month").value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+const fmt=(n,d=0)=>Number(n||0).toLocaleString("th-TH",{minimumFractionDigits:d,maximumFractionDigits:d}),pct=n=>(Number(n||0)*100).toFixed(3)+"%";
+function msg(t){$("msg").textContent=t;$("msg").style.display="block"}
+function jsonp(url){return new Promise((resolve,reject)=>{const cb="dash_"+Date.now()+"_"+Math.random().toString(36).slice(2);window[cb]=d=>{resolve(d);delete window[cb];s.remove()};const s=document.createElement("script");s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;s.onerror=()=>{reject(new Error("โหลดข้อมูลไม่ได้"));delete window[cb];s.remove()};document.body.appendChild(s)})}
+function bars(id,rows){
+ const el=$(id);if(!rows.length){el.textContent="ยังไม่มีข้อมูล";return}
+ const max=Math.max(...rows.map(x=>Math.abs(Number(x.lossPct||0))),.0001);
+ el.innerHTML=rows.slice(0,15).map(x=>`<div class="barrow"><div title="${x.name}">${x.name}</div><div class="track"><div class="fill" style="width:${Math.max(2,Math.abs(Number(x.lossPct||0))/max*100)}%"></div></div><b>${pct(x.lossPct)}</b></div>`).join("")
+}
+function trend(rows){
+ const svg=$("trend"),W=1000,H=270,pad=38;svg.innerHTML="";
+ if(!rows.length){svg.innerHTML='<text x="500" y="140" text-anchor="middle" fill="#64748b">ยังไม่มีข้อมูล</text>';return}
+ const vals=rows.map(x=>Number(x.lossPct||0)),min=Math.min(...vals,0),max=Math.max(...vals,.001),span=max-min||1;
+ const pts=rows.map((r,i)=>[pad+(W-pad*2)*(i/Math.max(rows.length-1,1)),H-pad-(H-pad*2)*((Number(r.lossPct)-min)/span)]);
+ const axis=document.createElementNS("http://www.w3.org/2000/svg","line");axis.setAttribute("x1",pad);axis.setAttribute("x2",W-pad);axis.setAttribute("y1",H-pad);axis.setAttribute("y2",H-pad);axis.setAttribute("stroke","#cbd5e1");svg.appendChild(axis);
+ const line=document.createElementNS("http://www.w3.org/2000/svg","polyline");line.setAttribute("points",pts.map(p=>p.join(",")).join(" "));line.setAttribute("fill","none");line.setAttribute("stroke","#1d6fa5");line.setAttribute("stroke-width","3");svg.appendChild(line);
+ pts.forEach((p,i)=>{const c=document.createElementNS("http://www.w3.org/2000/svg","circle");c.setAttribute("cx",p[0]);c.setAttribute("cy",p[1]);c.setAttribute("r","4");c.setAttribute("fill","#0f4c81");svg.appendChild(c);if(rows.length<=15){const t=document.createElementNS("http://www.w3.org/2000/svg","text");t.setAttribute("x",p[0]);t.setAttribute("y",H-10);t.setAttribute("text-anchor","middle");t.setAttribute("font-size","10");t.setAttribute("fill","#64748b");t.textContent=rows[i].name.slice(5);svg.appendChild(t)}})
+}
+function setOptions(id,items,current){
+ const el=$(id);el.innerHTML='<option>ทั้งหมด</option>'+items.map(x=>`<option>${x}</option>`).join("");if(items.map(String).includes(String(current)))el.value=String(current);else el.value="ทั้งหมด"
+}
+function render(d){
+ $("msg").style.display="none";const s=d.summary||{};
+ $("jobs").textContent=fmt(s.reports)+" / "+fmt(s.jobs);$("output").textContent=fmt(s.output);$("bulk").textContent=fmt(s.bulkUsed,2)+" kg";$("lossKg").textContent=fmt(s.lossKg,2)+" kg";$("lossPct").textContent=pct(s.lossPct);$("yield").textContent=pct(s.yieldPct);$("passRate").textContent=(Number(s.passRate||0)*100).toFixed(1)+"%";$("fillDelta").textContent=(Number(s.fillDeltaKg||0)>=0?"+":"")+fmt(s.fillDeltaKg,2)+" kg";$("pouchLoss").textContent=pct(s.pouchLossPct);$("filmLoss").textContent=pct(s.filmLossPct);$("boxLoss").textContent=pct(s.boxLossPct);$("pf").textContent=fmt(s.pass)+" / "+fmt(s.fail);
+ bars("byLine",d.byLine||[]);bars("bySize",d.bySize||[]);bars("byProduct",d.byProduct||[]);bars("byTank",d.byTank||[]);trend(d.daily||[]);
+ $("recent").innerHTML=(d.recent||[]).map(x=>`<tr><td>${x.timestamp}</td><td>${x.reportId}</td><td>${x.line}</td><td>${x.machine||"-"}</td><td>${x.size} ml</td><td>${x.product}</td><td>${fmt(x.output)}</td><td>${pct(x.lossPct)}</td><td>${Number(x.fillDeltaKg||0)>=0?"+":""}${fmt(x.fillDeltaKg,2)}</td><td><span class="pill ${x.result==="ผ่าน"?"pass":x.result==="เกินมาตรฐาน"?"fail":"wait"}">${x.result}</span></td></tr>`).join("");
+ const l=$("line").value,z=$("size").value,p=$("product").value;setOptions("line",d.lines||[],l);setOptions("size",(d.sizes||[]).map(x=>x+" ml"),z);setOptions("product",d.products||[],p)
+}
+async function load(){
+ if(!cfg.apiUrl||!cfg.apiUrl.includes("/exec")||cfg.apiUrl.includes("PASTE_")){msg("ยังไม่ได้ตั้ง Apps Script URL ใน config.js");return}
+ $("load").disabled=true;$("load").textContent="กำลังโหลด...";
+ try{
+   const sizeVal=$("size").value==="ทั้งหมด"?"ทั้งหมด":$("size").value.replace(" ml","");
+   const u=cfg.apiUrl+"?action=dashboard&month="+encodeURIComponent($("month").value)+"&line="+encodeURIComponent($("line").value)+"&size="+encodeURIComponent(sizeVal)+"&product="+encodeURIComponent($("product").value);
+   const d=await jsonp(u);if(!d.ok)throw new Error(d.error||"โหลดข้อมูลไม่ได้");render(d)
+ }catch(e){msg(e.message)}
+ finally{$("load").disabled=false;$("load").textContent="โหลดข้อมูล"}
+}
+$("load").onclick=load;$("month").onchange=load;$("line").onchange=load;$("size").onchange=load;$("product").onchange=load;load();
+</script></body></html>

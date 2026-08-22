@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4c81">
+<title>NF3 Production Report V1</title>
+<script src="config.js"></script>
+<style>
+:root{--blue:#0f4c81;--blue2:#1d6fa5;--line:#d7e0e7;--text:#17212b;--muted:#657586;--green:#15803d;--red:#b91c1c;--amber:#b45309}
+*{box-sizing:border-box}body{margin:0;font-family:"Sukhumvit Set","Leelawadee UI","Noto Sans Thai",Arial,sans-serif;background:linear-gradient(180deg,#dceaf4,#f3f7fa 240px);color:var(--text)}
+.wrap{max-width:980px;margin:auto;padding:14px 14px 52px}.hero{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:18px;border-radius:18px;box-shadow:0 10px 28px #0f4c8130;margin-bottom:14px}
+.heroRow{display:flex;align-items:center;justify-content:space-between;gap:10px}.hero h1{font-size:24px;margin:0}.hero p{margin:5px 0 0;opacity:.9;font-size:14px}.nav{color:#fff;text-decoration:none;border:1px solid #ffffff80;border-radius:10px;padding:9px 12px;font-weight:800}
+.card{background:#fff;border:1px solid #dbe5ec;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 5px 16px #19375012}.title{font-size:17px;color:var(--blue);margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
+label{display:block;font-size:13px;color:var(--muted);font-weight:800;margin-bottom:5px}input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;outline:none}input:focus,select:focus,textarea:focus{border-color:#4e92bd;box-shadow:0 0 0 3px #4e92bd25}textarea{min-height:68px;resize:vertical}
+.error,.success{display:none;padding:10px;border-radius:10px;margin-bottom:12px;font-size:14px}.error{background:#fdecec;color:#a71d1d;border:1px solid #f3c0c0}.success{background:#e9f8ee;color:#11642f;border:1px solid #bfe6cc}
+.job{border:1px solid #cfdae2;border-radius:15px;margin:14px 0;background:#fff;overflow:hidden}.jobHead{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#edf5fa;padding:11px 13px}.jobTitle{font-weight:900;color:#0f4c81}.removeJob{width:auto;background:#fff0f0;color:#b91c1c;border:1px solid #f4c2c2;padding:7px 10px;border-radius:9px;font-weight:800;cursor:pointer}.jobBody{padding:13px}
+.masterInfo{background:#eef7fc;border:1px solid #cde3f1;border-radius:11px;padding:9px;font-size:12px;color:#39556b;line-height:1.55}.hint{font-size:11px;color:var(--muted);margin-top:4px}
+.batchBox{grid-column:1/-1;background:#fafcfd;border:1px solid #dde6ec;border-radius:12px;padding:10px}.batchHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.batchHead b{color:#0f4c81}.addBatch,.addJob{border:0;border-radius:10px;padding:9px 12px;font:inherit;font-weight:900;cursor:pointer;background:#e6f1f8;color:#0f4c81}.addJob{width:100%;padding:13px;font-size:16px;border:1px dashed #7da9c6}
+.batchRow{display:grid;grid-template-columns:55px 1.2fr 1fr 1fr 1fr 36px;gap:7px;align-items:end;margin-top:7px}.batchSeq{font-weight:900;color:#64748b;text-align:center;padding-bottom:10px}.delBatch{border:0;background:#fee2e2;color:#b91c1c;border-radius:8px;height:40px;cursor:pointer;font-weight:900}.compactLabel{font-size:11px}
+.calc{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}.metric{background:#f6f9fb;border:1px solid #e0e8ee;border-radius:10px;padding:8px}.metric .k{font-size:11px;color:#64748b}.metric .v{font-weight:900;font-size:15px;margin-top:2px}.status{grid-column:1/-1;text-align:center;border-radius:10px;padding:10px;font-weight:900}.pass{background:#e8f7ed;color:#166534}.fail{background:#fdecec;color:#b91c1c}.wait{background:#f3f4f6;color:#6b7280}.warn{background:#fef3c7;color:#92400e}
+.reportSummary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.summaryBox{background:#f6f9fb;border:1px solid #dde7ee;border-radius:11px;padding:10px}.summaryBox .k{font-size:11px;color:#64748b}.summaryBox .v{font-size:17px;font-weight:900}.preview{white-space:pre-wrap;background:#f8fafc;border:1px dashed #abbac6;border-radius:12px;padding:13px;line-height:1.55;font-size:13px;max-height:520px;overflow:auto}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.actions button{border:0;border-radius:12px;padding:13px;font:inherit;font-weight:900;font-size:16px;cursor:pointer}.save{background:#0f4c81;color:#fff}.copy{background:#e8f1f7;color:#0f4c81}.line{background:#06c755;color:#fff;grid-column:1/-1}.reset{background:#f3f4f6;color:#4b5563}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:#17212b;color:#fff;border-radius:99px;padding:10px 16px;transition:.2s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.calc,.reportSummary{grid-template-columns:1fr 1fr}.batchRow{grid-template-columns:38px 1fr 1fr}.batchRow .bulkField{grid-column:span 1}.batchRow .delBatch{grid-column:3}.hero h1{font-size:20px}}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="hero"><div class="heroRow"><div><h1>NF3 Production Report V1</h1><p>Multi-Line • Multi-Size • Multi-Job • Batch & Mix Tank Traceability</p></div><a class="nav" href="dashboard.html">Dashboard</a></div></div>
+
+  <div class="card">
+    <h2 class="title">ข้อมูล Report</h2>
+    <div id="error" class="error"></div><div id="success" class="success"></div>
+    <div class="grid">
+      <div><label>Building</label><input id="building" value="NF3" disabled></div>
+      <div><label>ผู้รายงาน</label><input id="reporter" placeholder="ชื่อผู้รายงาน"></div>
+      <div class="full"><label>หมายเหตุ Report</label><textarea id="reportRemark" placeholder="หมายเหตุรวมของการปิดงานครั้งนี้"></textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="title">รายการผลิต (Jobs)</h2>
+    <div id="jobs"></div>
+    <button id="addJob" class="addJob">＋ เพิ่ม Job / เพิ่ม Size / เพิ่ม Line</button>
+  </div>
+
+  <div class="card">
+    <h2 class="title">สรุป Report</h2>
+    <div class="reportSummary">
+      <div class="summaryBox"><div class="k">จำนวน Job</div><div class="v" id="sumJobs">0</div></div>
+      <div class="summaryBox"><div class="k">Output รวม</div><div class="v" id="sumOutput">0</div></div>
+      <div class="summaryBox"><div class="k">Bulk Used</div><div class="v" id="sumBulk">0 kg</div></div>
+      <div class="summaryBox"><div class="k">Process Loss</div><div class="v" id="sumLoss">0 kg</div></div>
+      <div class="summaryBox"><div class="k">Loss %</div><div class="v" id="sumLossPct">0%</div></div>
+      <div class="summaryBox"><div class="k">Yield</div><div class="v" id="sumYield">0%</div></div>
+      <div class="summaryBox"><div class="k">ผ่าน</div><div class="v" id="sumPass">0</div></div>
+      <div class="summaryBox"><div class="k">เกิน Std</div><div class="v" id="sumFail">0</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="title">ข้อความ LINE</h2>
+    <div id="preview" class="preview">กำลังโหลด Master...</div>
+    <div class="actions">
+      <button id="saveBtn" class="save">บันทึกข้อมูล</button>
+      <button id="copyBtn" class="copy">คัดลอกข้อความ</button>
+      <button id="saveLineBtn" class="line">บันทึกและส่งเข้า LINE</button>
+      <button id="resetBtn" class="reset">เริ่ม Report ใหม่</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const cfg=window.NF3_REPORT_CONFIG||{},$=id=>document.getElementById(id);
+let master={lineSizes:[],machines:[],products:[]},jobCounter=0;
+
+const numEl=el=>{const n=parseFloat(el?.value);return Number.isFinite(n)?n:0};
+const fmt=(n,d=2)=>Number(n||0).toLocaleString("th-TH",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=n=>(Number(n||0)*100).toFixed(3)+"%";
+const apiReady=()=>cfg.apiUrl&&cfg.apiUrl.includes("/exec")&&!cfg.apiUrl.includes("PASTE_");
+const toast=t=>{$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1600)};
+function showError(t){$("error").textContent=t;$("error").style.display="block";$("success").style.display="none";window.scrollTo({top:0,behavior:"smooth"})}
+function showSuccess(t){$("success").textContent=t;$("success").style.display="block";$("error").style.display="none"}
+
+function jsonp(url){return new Promise((resolve,reject)=>{const cb="nf3_"+Date.now()+"_"+Math.random().toString(36).slice(2);window[cb]=d=>{resolve(d);delete window[cb];s.remove()};const s=document.createElement("script");s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;s.onerror=()=>{reject(new Error("โหลดข้อมูล Master ไม่ได้"));delete window[cb];s.remove()};document.body.appendChild(s)})}
+
+async function loadMaster(){
+ if(!apiReady()){showError("ยังไม่ได้ใส่ Apps Script URL /exec ใน config.js");$("preview").textContent="กรุณาตั้งค่า config.js ก่อน";return}
+ try{
+   const d=await jsonp(cfg.apiUrl+"?action=master");
+   if(!d.ok)throw new Error(d.error||"โหลด Master ไม่ได้");
+   master={lineSizes:d.lineSizes||[],machines:d.machines||[],products:d.products||[]};
+   $("preview").textContent="เลือกข้อมูล Job เพื่อสร้างข้อความ";
+   addJob();
+ }catch(e){showError(e.message)}
+}
+
+function lines(){return [...new Set(master.lineSizes.map(x=>x.line))]}
+function sizesFor(line){return master.lineSizes.filter(x=>x.line===line).map(x=>x.size).sort((a,b)=>a-b)}
+function machinesFor(line){return master.machines.filter(x=>x.line===line)}
+function productsFor(size){return master.products.filter(x=>Number(x.size)===Number(size))}
+function lineCfg(line,size){return master.lineSizes.find(x=>x.line===line&&Number(x.size)===Number(size))||null}
+function productCfg(card){return master.products.find(x=>x.productId===card.querySelector('[data-f="product"]').value)||null}
+function jobCards(){return [...document.querySelectorAll(".job")]}
+
+function jobTemplate(id){
+ return `<div class="jobHead"><div class="jobTitle">Job <span class="jobNo"></span></div><button type="button" class="removeJob">ลบ Job</button></div>
+ <div class="jobBody"><div class="grid">
+   <div><label>Line</label><select data-f="line"><option value="">เลือก Line</option>${lines().map(x=>`<option>${x}</option>`).join("")}</select></div>
+   <div><label>Machine</label><select data-f="machine"><option value="">เลือก Machine</option></select></div>
+   <div class="laneWrap hidden"><label>Lane</label><select data-f="lane"><option value="">รวม / ไม่ระบุ</option></select></div>
+   <div><label>Size</label><select data-f="size"><option value="">เลือก Size</option></select></div>
+   <div class="full"><label>Product</label><select data-f="product"><option value="">เลือก Product</option></select></div>
+   <div class="full masterInfo">เลือก Line → Size → Product</div>
+
+   <div class="batchBox">
+     <div class="batchHead"><b>Batch / Mix Tank</b><button type="button" class="addBatch">＋ เพิ่ม Batch</button></div>
+     <div class="batchRows"></div>
+     <div class="hint">ถ้า Batch เดียวถูกแบ่งไปเดินหลาย Size/Job ให้กรอก Bulk Input / Allocated ของแต่ละ Job เพื่อไม่ให้นับ Bulk ซ้ำ</div>
+   </div>
+
+   <div><label>Output (ชิ้น/ซอง)</label><input data-f="output" type="number" min="0" step="1" inputmode="numeric"></div>
+   <div><label>ประเภทน้ำหนัก</label><select data-f="weightType"><option value="Gross">Gross — รวม Packaging</option><option value="Net">Net — เฉพาะน้ำยา</option></select></div>
+   <div><label>Avg Weight จริง (g)</label><input data-f="avgWeight" type="number" min="0" step=".001" inputmode="decimal"></div>
+   <div><label>ซองเสีย / Pouch Scrap (ใบ)</label><input data-f="pouchScrap" type="number" min="0" step="1" value="0"></div>
+   <div class="filmField"><label>Film รับเข้า (kg)</label><input data-f="filmIssued" type="number" min="0" step=".01" value="0"></div>
+   <div class="filmField"><label>Film เสีย (kg)</label><input data-f="filmScrap" type="number" min="0" step=".01" value="0"></div>
+   <div><label>กล่องเสีย (ใบ)</label><input data-f="boxScrap" type="number" min="0" step="1" value="0"></div>
+   <div class="full"><label>หมายเหตุ Job</label><textarea data-f="remark" placeholder="ปัญหาเครื่อง / Film joint / Filling adjustment ฯลฯ"></textarea></div>
+
+   <div class="calc">
+     <div class="metric"><div class="k">Bulk Used</div><div class="v" data-v="bulk">-</div></div>
+     <div class="metric"><div class="k">Good Liquid</div><div class="v" data-v="good">-</div></div>
+     <div class="metric"><div class="k">Process Loss</div><div class="v" data-v="loss">-</div></div>
+     <div class="metric"><div class="k">Loss %</div><div class="v" data-v="lossPct">-</div></div>
+     <div class="metric"><div class="k">Yield</div><div class="v" data-v="yield">-</div></div>
+     <div class="metric"><div class="k">Fill Delta</div><div class="v" data-v="fillDelta">-</div></div>
+     <div class="metric"><div class="k">% Pouch Loss</div><div class="v" data-v="pouchLoss">-</div></div>
+     <div class="metric"><div class="k">% Film Loss</div><div class="v" data-v="filmLoss">-</div></div>
+     <div class="metric"><div class="k">% Box Loss</div><div class="v" data-v="boxLoss">-</div></div>
+     <div class="status wait" data-v="status">รอข้อมูล</div>
+   </div>
+ </div></div>`;
+}
+
+function addJob(){
+ const div=document.createElement("div");div.className="job";div.dataset.jobKey=String(++jobCounter);div.innerHTML=jobTemplate(jobCounter);
+ $("jobs").appendChild(div);addBatch(div);renumberJobs();calcAll();return div
+}
+function renumberJobs(){jobCards().forEach((c,i)=>c.querySelector(".jobNo").textContent=i+1);jobCards().forEach(c=>c.querySelector(".removeJob").style.display=jobCards().length>1?"":"none")}
+
+function addBatch(card){
+ const rows=card.querySelector(".batchRows"),row=document.createElement("div");row.className="batchRow";
+ row.innerHTML=`<div class="batchSeq"></div>
+ <div><label class="compactLabel">Batch No.</label><input data-b="batchNo" placeholder="Batch No."></div>
+ <div><label class="compactLabel">Mix Tank No.</label><input data-b="mixTank" placeholder="Tank"></div>
+ <div class="bulkField"><label class="compactLabel">Bulk Input / Allocated kg</label><input data-b="bulkInput" type="number" min="0" step=".01" placeholder="ใช้ค่า Master"></div>
+ <div class="bulkField"><label class="compactLabel">Bulk Return kg</label><input data-b="bulkReturn" type="number" min="0" step=".01" value="0"></div>
+ <button type="button" class="delBatch">×</button>`;
+ rows.appendChild(row);renumberBatches(card);calcAll()
+}
+function renumberBatches(card){const rows=[...card.querySelectorAll(".batchRow")];rows.forEach((r,i)=>{r.querySelector(".batchSeq").textContent="#"+(i+1);r.querySelector(".delBatch").style.visibility=rows.length>1?"visible":"hidden"})}
+
+function refreshLine(card){
+ const line=card.querySelector('[data-f="line"]').value;
+ const m=card.querySelector('[data-f="machine"]'),sz=card.querySelector('[data-f="size"]');
+ m.innerHTML='<option value="">เลือก Machine</option>'+machinesFor(line).map(x=>`<option>${x.machine}</option>`).join("");
+ sz.innerHTML='<option value="">เลือก Size</option>'+sizesFor(line).map(x=>`<option value="${x}">${x} ml</option>`).join("");
+ card.querySelector('[data-f="product"]').innerHTML='<option value="">เลือก Product</option>';
+ refreshMachine(card);refreshProduct(card)
+}
+function refreshMachine(card){
+ const line=card.querySelector('[data-f="line"]').value,machine=card.querySelector('[data-f="machine"]').value;
+ const cfgm=master.machines.find(x=>x.line===line&&x.machine===machine),wrap=card.querySelector(".laneWrap"),lane=card.querySelector('[data-f="lane"]');
+ const count=cfgm?Number(cfgm.laneCount||0):0;
+ if(count>0){wrap.classList.remove("hidden");lane.innerHTML='<option value="">รวม / ไม่ระบุ</option>'+Array.from({length:count},(_,i)=>`<option value="${i+1}">Lane ${i+1}</option>`).join("")}
+ else{wrap.classList.add("hidden");lane.innerHTML='<option value="">รวม / ไม่ระบุ</option>'}
+}
+function refreshSize(card){
+ const size=Number(card.querySelector('[data-f="size"]').value||0),sel=card.querySelector('[data-f="product"]'),ps=productsFor(size);
+ sel.innerHTML='<option value="">เลือก Product</option>'+ps.map(p=>`<option value="${p.productId}">${p.product}</option>`).join("");
+ if(!ps.length)sel.innerHTML='<option value="">ยังไม่มี Product ใน ProductMaster</option>';
+ refreshProduct(card)
+}
+function refreshProduct(card){
+ const p=productCfg(card),line=card.querySelector('[data-f="line"]').value,size=Number(card.querySelector('[data-f="size"]').value||0),lc=lineCfg(line,size);
+ const info=card.querySelector(".masterInfo");
+ if(!p){info.textContent="เลือก Product เพื่อดูค่า Master";return}
+ card.querySelector('[data-f="weightType"]').value=p.weightInputDefault||"Gross";
+ info.innerHTML=`<b>Master:</b> ${p.product} • ${p.size} ml • Bulk/Batch ${p.bulkPerBatch?fmt(p.bulkPerBatch,0)+" kg":"ยังไม่ตั้ง"} • Target Net ${p.targetNet?fmt(p.targetNet,3)+" g":"ยังไม่ตั้ง"} • Tare ${fmt(p.pouchTare||0,3)} g • Pack/Carton ${p.packPerCarton?fmt(p.packPerCarton,0):"ยังไม่ตั้ง"} • Std Loss ${p.stdLiquidLoss?pct(p.stdLiquidLoss):"ยังไม่ตั้ง"}`;
+ const filmFields=card.querySelectorAll(".filmField");filmFields.forEach(x=>x.classList.toggle("hidden",lc&&lc.packagingType!=="Sachet"));
+}
+
+function calcJob(card){
+ const p=productCfg(card),line=card.querySelector('[data-f="line"]').value,size=Number(card.querySelector('[data-f="size"]').value||0),lc=lineCfg(line,size);
+ const output=numEl(card.querySelector('[data-f="output"]')),raw=numEl(card.querySelector('[data-f="avgWeight"]'));
+ const weightType=card.querySelector('[data-f="weightType"]').value,tare=p?Number(p.pouchTare||0):0,avgNet=weightType==="Net"?raw:Math.max(raw-tare,0);
+ const target=p?Number(p.targetNet||0):0,defaultBulk=p?Number(p.bulkPerBatch||0):0;
+ const batches=[...card.querySelectorAll(".batchRow")].map(r=>{
+   const entered=numEl(r.querySelector('[data-b="bulkInput"]')),bulkInput=entered>0?entered:defaultBulk,bulkReturn=numEl(r.querySelector('[data-b="bulkReturn"]'));
+   return {batchNo:r.querySelector('[data-b="batchNo"]').value.trim(),mixTank:r.querySelector('[data-b="mixTank"]').value.trim(),bulkInput:entered,calcBulkInput:bulkInput,bulkReturn,bulkUsed:bulkInput-bulkReturn}
+ });
+ const bulkUsed=batches.reduce((a,b)=>a+(Number.isFinite(b.bulkUsed)?b.bulkUsed:0),0),good=output&&avgNet?output*avgNet/1000:0,loss=bulkUsed-good,lossPct=bulkUsed?loss/bulkUsed:0,yieldPct=bulkUsed?good/bulkUsed:0;
+ const fillDeltaG=target?avgNet-target:0,fillDeltaKg=target?fillDeltaG*output/1000:0,std=p?Number(p.stdLiquidLoss||0):0;
+ const result=std>0?(lossPct<=std?"ผ่าน":"เกินมาตรฐาน"):"ยังไม่ตั้ง Std";
+ const pouchScrap=numEl(card.querySelector('[data-f="pouchScrap"]')),pouchLoss=output?pouchScrap/output:0;
+ const filmIssued=numEl(card.querySelector('[data-f="filmIssued"]')),filmScrap=numEl(card.querySelector('[data-f="filmScrap"]')),filmLoss=filmIssued?filmScrap/filmIssued:0;
+ const boxScrap=numEl(card.querySelector('[data-f="boxScrap"]')),pack=p?Number(p.packPerCarton||0):0,boxLoss=output&&pack?boxScrap/(output/pack):0;
+ card.querySelector('[data-v="bulk"]').textContent=bulkUsed?fmt(bulkUsed)+" kg":"-";card.querySelector('[data-v="good"]').textContent=good?fmt(good)+" kg":"-";
+ card.querySelector('[data-v="loss"]').textContent=bulkUsed?fmt(loss)+" kg":"-";card.querySelector('[data-v="lossPct"]').textContent=bulkUsed?pct(lossPct):"-";
+ card.querySelector('[data-v="yield"]').textContent=bulkUsed?pct(yieldPct):"-";card.querySelector('[data-v="fillDelta"]').textContent=target?(fillDeltaKg>=0?"+":"")+fmt(fillDeltaKg)+" kg":"-";
+ card.querySelector('[data-v="pouchLoss"]').textContent=output?pct(pouchLoss):"-";card.querySelector('[data-v="filmLoss"]').textContent=filmIssued?pct(filmLoss):"-";card.querySelector('[data-v="boxLoss"]').textContent=output&&pack?pct(boxLoss):"-";
+ const st=card.querySelector('[data-v="status"]');st.className="status "+(!p||!output||!bulkUsed?"wait":std<=0?"warn":result==="ผ่าน"?"pass":"fail");st.textContent=!p||!output||!bulkUsed?"รอข้อมูล":std<=0?"⚠️ ยังไม่ตั้ง Standard":result==="ผ่าน"?"✅ ผ่านมาตรฐาน":"🔴 เกินมาตรฐาน";
+ return {line,machine:card.querySelector('[data-f="machine"]').value,lane:card.querySelector('[data-f="lane"]').value,size,product:p?p.product:"",productId:p?p.productId:"",packagingType:lc?lc.packagingType:"",
+   batches,output,weightType,avgWeight:raw,avgNet,bulkUsed,good,loss,lossPct,yieldPct,fillDeltaKg,std,result,pouchScrap,pouchLoss,filmIssued,filmScrap,filmLoss,boxScrap,boxLoss,remark:card.querySelector('[data-f="remark"]').value.trim()}
+}
+function calcAll(){
+ const jobs=jobCards().map(calcJob);const output=jobs.reduce((a,j)=>a+j.output,0),bulk=jobs.reduce((a,j)=>a+j.bulkUsed,0),good=jobs.reduce((a,j)=>a+j.good,0),loss=bulk-good,lossPct=bulk?loss/bulk:0,yieldPct=bulk?good/bulk:0;
+ $("sumJobs").textContent=jobs.length;$("sumOutput").textContent=fmt(output,0);$("sumBulk").textContent=fmt(bulk)+" kg";$("sumLoss").textContent=fmt(loss)+" kg";$("sumLossPct").textContent=pct(lossPct);$("sumYield").textContent=pct(yieldPct);
+ $("sumPass").textContent=jobs.filter(j=>j.result==="ผ่าน").length;$("sumFail").textContent=jobs.filter(j=>j.result==="เกินมาตรฐาน").length;
+ renderPreview(jobs,{output,bulk,good,loss,lossPct,yieldPct});return jobs
+}
+function renderPreview(jobs,sum){
+ let t=`📊 NF3 Production Closeout\n🏭 Building: NF3\n📋 Jobs: ${jobs.length}\n`;
+ jobs.forEach((j,i)=>{
+   t+=`\n━━ Job ${i+1} ━━\n⚙️ ${j.line}${j.machine?" / "+j.machine:""}${j.lane?" / Lane "+j.lane:""}\n📏 Size: ${j.size||"-"} ml\n🏷 Product: ${j.product||"-"}\n`;
+   t+=`🧪 Batch / Mix Tank (${j.batches.length})\n`;
+   j.batches.forEach((b,bi)=>{t+=`${bi+1}) ${b.batchNo||"-"} → Tank ${b.mixTank||"-"} | Bulk ${b.calcBulkInput?fmt(b.calcBulkInput):"-"} kg${b.bulkReturn?" | Return "+fmt(b.bulkReturn)+" kg":""}\n`});
+   t+=`✅ Output: ${fmt(j.output,0)}\n⚖️ Avg ${j.weightType}: ${fmt(j.avgWeight,3)} g | Net ${fmt(j.avgNet,3)} g\n`;
+   t+=`💧 Bulk Used: ${fmt(j.bulkUsed)} kg | Good Liquid: ${fmt(j.good)} kg\n📉 Process Loss: ${fmt(j.loss)} kg (${pct(j.lossPct)})\n🎯 Yield: ${pct(j.yieldPct)} | Fill Δ: ${(j.fillDeltaKg>=0?"+":"")+fmt(j.fillDeltaKg)} kg\n`;
+   t+=`🧴 Pouch Scrap: ${fmt(j.pouchScrap,0)} (${pct(j.pouchLoss)})`;
+   if(j.packagingType==="Sachet")t+=` | 🎞 Film: ${fmt(j.filmScrap,2)} kg (${pct(j.filmLoss)})`;
+   if(j.boxScrap||j.boxLoss)t+=` | 📦 Box: ${fmt(j.boxScrap,0)} (${pct(j.boxLoss)})`;
+   t+=`\n🔎 Result: ${j.result}`;
+   if(j.remark)t+=`\n📝 ${j.remark}`;
+   t+="\n";
+ });
+ t+=`\n━━ Summary ━━\n✅ Output รวม: ${fmt(sum.output,0)}\n💧 Bulk Used รวม: ${fmt(sum.bulk)} kg\n📉 Process Loss รวม: ${fmt(sum.loss)} kg (${pct(sum.lossPct)})\n🎯 Yield รวม: ${pct(sum.yieldPct)}\n👤 ผู้รายงาน: ${$("reporter").value.trim()||"-"}`;
+ if($("reportRemark").value.trim())t+=`\n📝 Report: ${$("reportRemark").value.trim()}`;
+ $("preview").textContent=t
+}
+
+function validate(){
+ if(!$("reporter").value.trim()){showError("กรุณากรอกผู้รายงาน");return false}
+ const jobs=jobCards();if(!jobs.length){showError("ต้องมีอย่างน้อย 1 Job");return false}
+ for(let i=0;i<jobs.length;i++){
+   const c=jobs[i],n=i+1,p=productCfg(c);
+   if(!c.querySelector('[data-f="line"]').value){showError(`Job ${n}: กรุณาเลือก Line`);return false}
+   if(!c.querySelector('[data-f="machine"]').value){showError(`Job ${n}: กรุณาเลือก Machine`);return false}
+   if(!c.querySelector('[data-f="size"]').value){showError(`Job ${n}: กรุณาเลือก Size`);return false}
+   if(!p){showError(`Job ${n}: กรุณาเลือก Product หรือเพิ่ม Product ใน ProductMaster`);return false}
+   if(numEl(c.querySelector('[data-f="output"]'))<=0){showError(`Job ${n}: กรุณากรอก Output`);return false}
+   if(numEl(c.querySelector('[data-f="avgWeight"]'))<=0){showError(`Job ${n}: กรุณากรอก Avg Weight`);return false}
+   const rows=[...c.querySelectorAll(".batchRow")];
+   for(let b=0;b<rows.length;b++){
+     if(!rows[b].querySelector('[data-b="batchNo"]').value.trim()){showError(`Job ${n} Batch ${b+1}: กรุณากรอก Batch No.`);return false}
+     if(!rows[b].querySelector('[data-b="mixTank"]').value.trim()){showError(`Job ${n} Batch ${b+1}: กรุณากรอก Mix Tank No.`);return false}
+     const entered=numEl(rows[b].querySelector('[data-b="bulkInput"]'));
+     if(entered<=0&&Number(p.bulkPerBatch||0)<=0){showError(`Job ${n} Batch ${b+1}: ไม่มี Bulk/Batch ใน Master กรุณากรอก Bulk Input`);return false}
+   }
+ }
+ return true
+}
+function reportId(){return "NF3-"+new Date().toISOString().replace(/\D/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,6).toUpperCase()}
+function fingerprint(){return [$("reporter").value,$("reportRemark").value,...jobCards().map(c=>[c.querySelector('[data-f="line"]').value,c.querySelector('[data-f="size"]').value,c.querySelector('[data-f="product"]').value,c.querySelector('[data-f="output"]').value,...[...c.querySelectorAll(".batchRow")].map(r=>r.querySelector('[data-b="batchNo"]').value+"@"+r.querySelector('[data-b="mixTank"]').value)].join("|"))].join("||")}
+async function saveData(){
+ if(!validate())throw new Error("ข้อมูลไม่ครบ");if(!apiReady()){showError("ยังไม่ได้ตั้ง Apps Script URL ใน config.js");throw new Error("no api")}
+ const fp=fingerprint();if(localStorage.getItem("nf3_last_fp")===fp&&localStorage.getItem("nf3_last_id")){showSuccess("Report นี้บันทึกแล้ว: "+localStorage.getItem("nf3_last_id"));return localStorage.getItem("nf3_last_id")}
+ const rid=reportId(),jobs=calcAll().map(j=>({line:j.line,machine:j.machine,lane:j.lane,size:j.size,product:j.product,productId:j.productId,output:j.output,weightType:j.weightType,avgWeight:j.avgWeight,pouchScrap:j.pouchScrap,filmIssued:j.filmIssued,filmScrap:j.filmScrap,boxScrap:j.boxScrap,remark:j.remark,batches:j.batches.map(b=>({batchNo:b.batchNo,mixTank:b.mixTank,bulkInput:b.bulkInput,bulkReturn:b.bulkReturn}))}));
+ const payload={reportId:rid,building:"NF3",reporter:$("reporter").value.trim(),remark:$("reportRemark").value.trim(),jobs};
+ $("saveBtn").disabled=true;$("saveLineBtn").disabled=true;
+ try{
+   await fetch(cfg.apiUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+   localStorage.setItem("nf3_reporter",payload.reporter);localStorage.setItem("nf3_last_fp",fp);localStorage.setItem("nf3_last_id",rid);showSuccess("บันทึกแล้ว — "+rid);return rid
+ }finally{$("saveBtn").disabled=false;$("saveLineBtn").disabled=false}
+}
+function resetReport(){
+ $("jobs").innerHTML="";jobCounter=0;$("reportRemark").value="";localStorage.removeItem("nf3_last_fp");localStorage.removeItem("nf3_last_id");addJob();$("success").style.display="none";calcAll()
+}
+
+$("jobs").addEventListener("change",e=>{
+ const card=e.target.closest(".job");if(!card)return;
+ if(e.target.matches('[data-f="line"]'))refreshLine(card);
+ if(e.target.matches('[data-f="machine"]'))refreshMachine(card);
+ if(e.target.matches('[data-f="size"]'))refreshSize(card);
+ if(e.target.matches('[data-f="product"]'))refreshProduct(card);
+ calcAll()
+});
+$("jobs").addEventListener("input",()=>calcAll());
+$("jobs").addEventListener("click",e=>{
+ const card=e.target.closest(".job");if(!card)return;
+ if(e.target.closest(".addBatch"))addBatch(card);
+ if(e.target.closest(".delBatch")){const row=e.target.closest(".batchRow");if(card.querySelectorAll(".batchRow").length>1)row.remove();renumberBatches(card);calcAll()}
+ if(e.target.closest(".removeJob")){if(jobCards().length>1){card.remove();renumberJobs();calcAll()}}
+});
+$("addJob").onclick=()=>addJob();
+$("reporter").value=localStorage.getItem("nf3_reporter")||"";$("reporter").addEventListener("input",calcAll);$("reportRemark").addEventListener("input",calcAll);
+$("saveBtn").onclick=async()=>{try{await saveData();toast("บันทึกข้อมูลแล้ว")}catch(e){}};
+$("saveLineBtn").onclick=async()=>{try{await saveData();location.href="https://line.me/R/share?text="+encodeURIComponent($("preview").textContent)}catch(e){}};
+$("copyBtn").onclick=async()=>{if(!validate())return;const t=$("preview").textContent;try{await navigator.clipboard.writeText(t)}catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove()}toast("คัดลอกแล้ว")};
+$("resetBtn").onclick=resetReport;
+
+loadMaster();
+</script>
+</body></html>
