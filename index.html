@@ -40,15 +40,12 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:800;margin-bot
 <div class="card"><h2 class="title">รายการผลิต (Jobs)</h2><div id="jobs"></div><button id="addJob" class="addJob">＋ เพิ่ม Job / เพิ่ม Size / เพิ่ม Line</button></div>
 
 <div class="card"><h2 class="title">สรุป Report</h2><div class="reportSummary">
-<div class="summaryBox"><div class="k">จำนวน Job</div><div class="v" id="sumJobs">0</div></div>
 <div class="summaryBox"><div class="k">Output รวม</div><div class="v" id="sumOutput">0</div></div>
-<div class="summaryBox"><div class="k">Bulk Used จาก Batch</div><div class="v" id="sumBulk">0 kg</div></div>
-<div class="summaryBox"><div class="k">น้ำยาที่คิดได้จากงาน</div><div class="v" id="sumLiquid">0 kg</div></div>
-<div class="summaryBox"><div class="k">Process Loss / Balance</div><div class="v balance" id="sumLoss">0 kg</div></div>
-<div class="summaryBox"><div class="k">Loss %</div><div class="v" id="sumLossPct">0%</div></div>
+<div class="summaryBox"><div class="k">Bulk ที่ได้จากผสม</div><div class="v" id="sumBulk">0 kg</div></div>
+<div class="summaryBox"><div class="k">Bulk ที่คิดได้จากงานรวม</div><div class="v" id="sumLiquid">0 kg</div></div>
+<div class="summaryBox"><div class="k">Yield loss</div><div class="v balance" id="sumLoss">0 kg</div></div>
 <div class="summaryBox"><div class="k">Yield</div><div class="v" id="sumYield">0%</div></div>
-<div class="summaryBox"><div class="k">Fill Delta รวม</div><div class="v" id="sumFillDelta">0 kg</div></div>
-</div><div class="note"><b>หลักการ:</b> Process Loss คำนวณระดับ Report เท่านั้น = Bulk Used จาก Batch ทั้งหมด − น้ำยาที่คิดได้จาก Job ทั้งหมด จึงไม่แจก Loss กลับไปแต่ละ Size แบบสมมติ</div></div>
+</div><div class="note"><b>สูตร Yield loss:</b> Bulk ที่คิดได้จากงานรวม − Bulk ที่ได้จากผสม</div></div>
 
 <div class="card"><h2 class="title">ข้อความ LINE</h2><div id="preview" class="preview">กำลังโหลด Master...</div><div class="actions">
 <button id="saveBtn" class="save">บันทึกข้อมูล</button><button id="copyBtn" class="copy">คัดลอกข้อความ</button><button id="saveLineBtn" class="line">บันทึกและส่งเข้า LINE</button><button id="resetBtn" class="reset">เริ่ม Report ใหม่</button>
@@ -60,6 +57,8 @@ let master={lineSizes:[],products:[],defaultBatchKg:35000},jobCounter=0;
 const numEl=el=>{const n=parseFloat(el?.value);return Number.isFinite(n)?n:0};
 const fmt=(n,d=2)=>Number(n||0).toLocaleString("th-TH",{minimumFractionDigits:d,maximumFractionDigits:d});
 const pct=n=>(Number(n||0)*100).toFixed(3)+"%";
+const signed=n=>(Number(n)>0?"+":"")+fmt(n);
+const signedPct=n=>(Number(n)>0?"+":"")+(Number(n||0)*100).toFixed(3)+"%";
 const apiReady=()=>cfg.apiUrl&&cfg.apiUrl.includes("/exec")&&!cfg.apiUrl.includes("PASTE_");
 const toast=t=>{$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1600)};
 function showError(t){$("error").textContent=t;$("error").style.display="block";$("success").style.display="none";window.scrollTo({top:0,behavior:"smooth"})}
@@ -108,8 +107,44 @@ function refreshLine(card){const line=card.querySelector('[data-f="line"]').valu
 function refreshSize(card){const size=Number(card.querySelector('[data-f="size"]').value||0),sel=card.querySelector('[data-f="product"]'),ps=productsFor(size);sel.innerHTML='<option value="">เลือก Product</option>'+ps.map(p=>`<option value="${p.productId}">${p.product}</option>`).join("");if(!ps.length)sel.innerHTML='<option value="">ยังไม่มี Product ใน ProductMaster</option>';refreshProduct(card)}
 function refreshProduct(card){const p=productCfg(card),line=card.querySelector('[data-f="line"]').value,size=Number(card.querySelector('[data-f="size"]').value||0),lc=lineCfg(line,size),info=card.querySelector(".masterInfo");if(!p){info.textContent="เลือก Product เพื่อดูค่า Master";return}card.querySelector('[data-f="weightType"]').value=p.weightInputDefault||"Gross";info.innerHTML=`<b>Master:</b> ${p.product} • ${p.size} ml • Target Net ${p.targetNet?fmt(p.targetNet,3)+" g":"ยังไม่ตั้ง"} • Tare ${fmt(p.pouchTare||0,3)} g • Pack/Carton ${p.packPerCarton?fmt(p.packPerCarton,0):"ยังไม่ตั้ง"}`;card.querySelectorAll(".filmField").forEach(x=>x.classList.toggle("hidden",lc&&lc.packagingType!=="Sachet"))}
 function calcJob(card){const p=productCfg(card),line=card.querySelector('[data-f="line"]').value,size=Number(card.querySelector('[data-f="size"]').value||0),lc=lineCfg(line,size),output=numEl(card.querySelector('[data-f="output"]')),raw=numEl(card.querySelector('[data-f="avgWeight"]')),weightType=card.querySelector('[data-f="weightType"]').value,tare=p?Number(p.pouchTare||0):0,avgNet=weightType==="Net"?raw:Math.max(raw-tare,0),target=p?Number(p.targetNet||0):0,liquid=output&&avgNet?output*avgNet/1000:0,fillDeltaG=target?avgNet-target:0,fillDeltaKg=target?fillDeltaG*output/1000:0,pouchScrap=numEl(card.querySelector('[data-f="pouchScrap"]')),pouchLoss=output?pouchScrap/output:0,filmIssued=numEl(card.querySelector('[data-f="filmIssued"]')),filmScrap=numEl(card.querySelector('[data-f="filmScrap"]')),filmLoss=filmIssued?filmScrap/filmIssued:0,boxScrap=numEl(card.querySelector('[data-f="boxScrap"]')),pack=p?Number(p.packPerCarton||0):0,boxLoss=output&&pack?boxScrap/(output/pack):0;card.querySelector('[data-v="liquid"]').textContent=liquid?fmt(liquid)+" kg":"-";card.querySelector('[data-v="fillDelta"]').textContent=target?(fillDeltaKg>=0?"+":"")+fmt(fillDeltaKg)+" kg":"-";card.querySelector('[data-v="pouchLoss"]').textContent=output?pct(pouchLoss):"-";card.querySelector('[data-v="filmLoss"]').textContent=filmIssued?pct(filmLoss):"-";card.querySelector('[data-v="boxLoss"]').textContent=output&&pack?pct(boxLoss):"-";return{line,size,product:p?p.product:"",productId:p?p.productId:"",packagingType:lc?lc.packagingType:"",output,weightType,avgWeight:raw,avgNet,targetNet:target,liquid,fillDeltaG,fillDeltaKg,pouchScrap,pouchLoss,filmIssued,filmScrap,filmLoss,packPerCarton:pack,boxScrap,boxLoss,remark:card.querySelector('[data-f="remark"]').value.trim()}}
-function calcAll(){const pool=calcBatches(),jobs=jobCards().map(calcJob),output=jobs.reduce((a,j)=>a+j.output,0),liquid=jobs.reduce((a,j)=>a+j.liquid,0),fillDelta=jobs.reduce((a,j)=>a+j.fillDeltaKg,0),loss=pool.used-liquid,lossPct=pool.used?loss/pool.used:0,yieldPct=pool.used?liquid/pool.used:0;$("sumJobs").textContent=jobs.length;$("sumOutput").textContent=fmt(output,0);$("sumBulk").textContent=fmt(pool.used)+" kg";$("sumLiquid").textContent=fmt(liquid)+" kg";$("sumLoss").textContent=(loss>=0?"":"")+fmt(loss)+" kg";$("sumLossPct").textContent=pct(lossPct);$("sumYield").textContent=pct(yieldPct);$("sumFillDelta").textContent=(fillDelta>=0?"+":"")+fmt(fillDelta)+" kg";const bal=$("sumLoss");bal.className="v balance "+(Math.abs(lossPct)<=0.001?"good":loss<0?"warn":"bad");renderPreview(pool,jobs,{output,liquid,fillDelta,loss,lossPct,yieldPct});return{pool,jobs,summary:{output,liquid,fillDelta,loss,lossPct,yieldPct}}}
-function renderPreview(pool,jobs,sum){let t=`📊 NF3 Production Closeout\n🏭 Building: NF3\n🧪 Batch: ${pool.batches.length} | Bulk Used: ${fmt(pool.used)} kg\n`;pool.batches.forEach((b,i)=>{t+=`${i+1}) ${b.batchNo||"-"} → Tank ${b.mixTank||"-"} | Input ${fmt(b.bulkInput)} kg${b.bulkReturn?" | Return "+fmt(b.bulkReturn)+" kg":""} | Used ${fmt(b.bulkUsed)} kg\n`});jobs.forEach((j,i)=>{t+=`\n━━ Job ${i+1} ━━\n⚙️ Line: ${j.line||"-"}\n📏 Size: ${j.size||"-"} ml\n🏷 Product: ${j.product||"-"}\n✅ Output: ${fmt(j.output,0)}\n⚖️ Avg ${j.weightType}: ${fmt(j.avgWeight,3)} g | Net ${fmt(j.avgNet,3)} g\n💧 น้ำยาที่คิดได้: ${fmt(j.liquid)} kg\n⚖️ Fill Δ: ${(j.fillDeltaKg>=0?"+":"")+fmt(j.fillDeltaKg)} kg\n🧴 Pouch Scrap: ${fmt(j.pouchScrap,0)} (${pct(j.pouchLoss)})`;if(j.packagingType==="Sachet")t+=` | 🎞 Film: ${fmt(j.filmScrap,2)} kg (${pct(j.filmLoss)})`;if(j.boxScrap||j.boxLoss)t+=` | 📦 Box: ${fmt(j.boxScrap,0)} (${pct(j.boxLoss)})`;if(j.remark)t+=`\n📝 ${j.remark}`;t+="\n"});t+=`\n━━ Summary ━━\n✅ Output รวม: ${fmt(sum.output,0)}\n💧 Bulk Used จาก Batch: ${fmt(pool.used)} kg\n🧴 น้ำยาที่คิดได้จากงานรวม: ${fmt(sum.liquid)} kg\n📉 Process Loss / Balance: ${fmt(sum.loss)} kg (${pct(sum.lossPct)})\n🎯 Yield: ${pct(sum.yieldPct)}\n⚖️ Fill Δ รวม: ${(sum.fillDelta>=0?"+":"")+fmt(sum.fillDelta)} kg\n👤 ผู้รายงาน: ${$("reporter").value.trim()||"-"}`;if($("reportRemark").value.trim())t+=`\n📝 Report: ${$("reportRemark").value.trim()}`;$("preview").textContent=t}
+function calcAll(){const pool=calcBatches(),jobs=jobCards().map(calcJob),output=jobs.reduce((a,j)=>a+j.output,0),liquid=jobs.reduce((a,j)=>a+j.liquid,0),fillDelta=jobs.reduce((a,j)=>a+j.fillDeltaKg,0),loss=liquid-pool.used,lossPct=pool.used?loss/pool.used:0,yieldPct=pool.used?liquid/pool.used:0;$("sumOutput").textContent=fmt(output,0);$("sumBulk").textContent=fmt(pool.used)+" kg";$("sumLiquid").textContent=fmt(liquid)+" kg";$("sumLoss").textContent=signed(loss)+" kg ("+signedPct(lossPct)+")";$("sumYield").textContent=pct(yieldPct);const bal=$("sumLoss");bal.className="v balance "+(Math.abs(lossPct)<=0.001?"good":"bad");renderPreview(pool,jobs,{output,liquid,fillDelta,loss,lossPct,yieldPct});return{pool,jobs,summary:{output,liquid,fillDelta,loss,lossPct,yieldPct}}}
+function renderPreview(pool,jobs,sum){let t=`📊 NF3 Production Summary Report
+
+🏭 Building: NF3
+
+🧪 Batch: ${pool.batches.length} | Bulk Used: ${fmt(pool.used)} kg
+`;pool.batches.forEach((b,i)=>{t+=`
+${i+1}) ${b.batchNo||"-"} → Tank ${b.mixTank||"-"} | Input ${fmt(b.bulkInput)} kg | Used ${fmt(b.bulkUsed)} kg
+`});jobs.forEach((j,i)=>{t+=`
+━━ Job ${i+1} ━━
+
+⚙️ Line: ${j.line||"-"}
+
+📏 Size: ${j.size||"-"} ml
+
+🏷 Product: ${j.product||"-"}
+
+✅ Output: ${fmt(j.output,0)}
+
+⚖️ Avg ${j.weightType}: ${fmt(j.avgWeight,3)} g
+
+💧 น้ำยาที่คิดได้: ${fmt(j.liquid)} kg
+
+🧴 Pouch Scrap: ${fmt(j.pouchScrap,0)} (${pct(j.pouchLoss)})
+`});t+=`
+━━ Summary ━━
+
+✅ Output รวม: ${fmt(sum.output,0)}
+
+💧 Bulk ที่ได้จากผสม: ${fmt(pool.used)} kg
+
+🧴 Bulk ที่คิดได้จากงานรวม: ${fmt(sum.liquid)} kg
+
+📉 Yield loss : ${signed(sum.loss)} kg (${signedPct(sum.lossPct)})
+
+🎯 Yield: ${pct(sum.yieldPct)}
+
+👤 ผู้รายงาน: ${$("reporter").value.trim()||"-"}`;$("preview").textContent=t}
 function validate(){if(!$("reporter").value.trim()){showError("กรุณากรอกผู้รายงาน");return false}const brows=[...document.querySelectorAll("#batchRows .batchRow")];if(!brows.length){showError("ต้องมีอย่างน้อย 1 Batch");return false}for(let i=0;i<brows.length;i++){if(!brows[i].querySelector('[data-b="batchNo"]').value.trim()){showError(`Batch ${i+1}: กรุณากรอก Batch No.`);return false}if(!brows[i].querySelector('[data-b="mixTank"]').value.trim()){showError(`Batch ${i+1}: กรุณากรอก Mix Tank No.`);return false}if(numEl(brows[i].querySelector('[data-b="bulkInput"]'))<=0){showError(`Batch ${i+1}: Bulk Input ต้องมากกว่า 0`);return false}}const jobs=jobCards();if(!jobs.length){showError("ต้องมีอย่างน้อย 1 Job");return false}for(let i=0;i<jobs.length;i++){const c=jobs[i],n=i+1,p=productCfg(c);if(!c.querySelector('[data-f="line"]').value){showError(`Job ${n}: กรุณาเลือก Line`);return false}if(!c.querySelector('[data-f="size"]').value){showError(`Job ${n}: กรุณาเลือก Size`);return false}if(!p){showError(`Job ${n}: กรุณาเลือก Product หรือเพิ่มใน ProductMaster`);return false}if(numEl(c.querySelector('[data-f="output"]'))<=0){showError(`Job ${n}: กรุณากรอก Output`);return false}if(numEl(c.querySelector('[data-f="avgWeight"]'))<=0){showError(`Job ${n}: กรุณากรอก Avg Weight`);return false}}return true}
 function reportId(){return "NF3-"+new Date().toISOString().replace(/\D/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,6).toUpperCase()}
 function fingerprint(){return [$("reporter").value,$("reportRemark").value,...[...document.querySelectorAll("#batchRows .batchRow")].map(r=>r.querySelector('[data-b="batchNo"]').value+"@"+r.querySelector('[data-b="mixTank"]').value+"@"+r.querySelector('[data-b="bulkInput"]').value),...jobCards().map(c=>[c.querySelector('[data-f="line"]').value,c.querySelector('[data-f="size"]').value,c.querySelector('[data-f="product"]').value,c.querySelector('[data-f="output"]').value,c.querySelector('[data-f="avgWeight"]').value].join("|"))].join("||")}
